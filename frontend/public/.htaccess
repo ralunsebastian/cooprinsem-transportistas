@@ -1,0 +1,7 @@
+# SPA fallback: cualquier ruta que no sea archivo real ni /api va a index.html
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]
