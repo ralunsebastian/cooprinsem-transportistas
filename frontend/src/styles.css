@@ -1,0 +1,62 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/outfit';
+@import '@fontsource-variable/figtree';
+
+@theme {
+  --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif;
+
+  /* Verde bosque profundo — color dominante (sidebar, headers) */
+  --color-forest-50: #f0f7f2;
+  --color-forest-100: #dcefe2;
+  --color-forest-200: #b9dfc6;
+  --color-forest-300: #8ac5a0;
+  --color-forest-400: #57a476;
+  --color-forest-500: #368557;
+  --color-forest-600: #276b45;
+  --color-forest-700: #205538;
+  --color-forest-800: #1b442e;
+  --color-forest-900: #133823;
+  --color-forest-950: #0a2415;
+
+  /* Verde Cooprinsem — acento (botones, links, badges) */
+  --color-brand-50: #f2fbf0;
+  --color-brand-100: #e0f6dc;
+  --color-brand-200: #c2ecbc;
+  --color-brand-300: #93dc8a;
+  --color-brand-400: #5fc455;
+  --color-brand-500: #3aa932;
+  --color-brand-600: #2b8a26;
+  --color-brand-700: #246d21;
+  --color-brand-800: #20571f;
+  --color-brand-900: #1b481b;
+  --color-brand-950: #0b280c;
+
+  --color-surface: #f4f8f5;
+
+  --shadow-card: 0 1px 2px rgb(10 36 21 / 0.05), 0 4px 16px -4px rgb(10 36 21 / 0.08);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-surface);
+  color: var(--color-forest-900);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+}
+
+::selection {
+  background-color: var(--color-brand-200);
+}

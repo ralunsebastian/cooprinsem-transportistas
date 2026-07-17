@@ -1,0 +1,87 @@
+name: Deploy QA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-qa
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build backend
+        working-directory: backend
+        run: |
+          npm ci
+          npm run build
+
+      # Las dependencias NO viajan por FTP: viven en el virtualenv del selector
+      # CloudLinux del hosting (node_modules es un symlink) y se instalan allá.
+      - name: Deploy backend (FTP)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          timeout: 60000
+          local-dir: backend/
+          server-dir: cooprinsem-api/
+          exclude: |
+            **/node_modules/**
+            **/src/**
+            **/tmp/**
+            **/*.map
+            **/*.d.ts
+            .env
+            .env.example
+            tsconfig.json
+            nest-cli.json
+
+      - name: Deploy frontend (FTP)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          timeout: 60000
+          local-dir: frontend/dist/
+          server-dir: public_html/cooprinsem.patagonianet.cl/
+
+      - name: NPM install en el servidor (selector CloudLinux)
+        run: |
+          CP="https://${{ secrets.FTP_SERVER }}:2083"
+          TOKEN=$(curl -sk -c cpjar "$CP/login/?login_only=1" \
+            --data-urlencode "user=${{ secrets.FTP_USERNAME }}" \
+            --data-urlencode "pass=${{ secrets.FTP_PASSWORD }}" \
+            | sed 's/.*"security_token":"\([^"]*\)".*/\1/')
+          echo "Ejecutando install-modules..."
+          curl -sk -b cpjar -X POST "$CP$TOKEN/3rdparty/cloudlinux/cloudlinux-selector.cgi?cgiaction=sendRequest" \
+            --data-urlencode 'command=cloudlinux-selector' \
+            --data-urlencode 'method=install-modules' \
+            --data-urlencode 'params[interpreter]=nodejs' \
+            --data-urlencode 'params[app-root]=cooprinsem-api' || true
+
+      - name: Restart Passenger
+        run: |
+          date > restart.txt
+          curl -sS --ssl-reqd --ftp-create-dirs \
+            -u "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" \
+            -T restart.txt "ftp://${{ secrets.FTP_SERVER }}/cooprinsem-api/tmp/restart.txt"
