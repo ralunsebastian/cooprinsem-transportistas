@@ -37,8 +37,14 @@ export class ConfiguracionService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    const filas = await this.repo.find();
-    this.cache = new Map(filas.map((f) => [f.clave, f.valor]));
+    // En el primer arranque en el hosting (synchronize off) la tabla aún no
+    // existe: SeedService la crea después; mientras, rigen los CONFIG_DEFAULTS.
+    try {
+      const filas = await this.repo.find();
+      this.cache = new Map(filas.map((f) => [f.clave, f.valor]));
+    } catch {
+      this.cache = new Map();
+    }
   }
 
   async findAll() {
